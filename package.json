@@ -1,0 +1,28 @@
+{
+  "name": "fetch-retry-or-die",
+  "version": "0.0.0",
+  "description": "A wrapper around isomorphic-fetch that allows retries in case of request failure",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Financial-Times/fetch-retry-or-die.git"
+  },
+  "keywords": [
+    "fetch",
+    "retries"
+  ],
+  "author": "Catalin Anghel <catalin.anghel@ft.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Financial-Times/fetch-retry-or-die/issues"
+  },
+  "homepage": "https://github.com/Financial-Times/fetch-retry-or-die#readme",
+  "dependencies": {
+    "@financial-times/n-logger": "^5.4.5",
+    "es6-promise": "^4.0.5",
+    "isomorphic-fetch": "^2.2.1"
+  }
+}
