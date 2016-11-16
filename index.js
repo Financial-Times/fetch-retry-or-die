@@ -23,10 +23,10 @@ module.exports = (url, opt) => {
                 .catch((err) => {
                     if (retryCount < maxRetries) {
                         retryCount++;
-                        logger.warn({operation: 'fetch-retry-or-die', msg: `Retry #${retryCount}`, url});
+                        logger.warn({operation: 'fetch-retry-or-die', msg: `Retry #${retryCount}`, reason: err.message || err, url});
                         setTimeout(doRequest, retryDelay);
                     } else {
-                        logger.error({operation: 'fetch-retry-or-die', err, url});
+                        logger.error({operation: 'fetch-retry-or-die', reason: err.message || err, url});
                         reject(err);
                     }
                 });
