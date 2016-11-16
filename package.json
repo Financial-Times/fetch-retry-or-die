@@ -1,6 +1,6 @@
 {
   "name": "fetch-retry-or-die",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A wrapper around isomorphic-fetch that allows retries in case of request failure",
   "main": "index.js",
   "scripts": {
