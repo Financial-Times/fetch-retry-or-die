@@ -2,12 +2,13 @@
 const expect = require('expectations');
 const proxyquire = require('proxyquire');
 const sinon = require('sinon');
+const logger = require('@financial-times/n-logger').default;
 
 const defer = () => {
     let resolve, reject;
-    const promise = new Promise(() => {
-        resolve = arguments[0];
-        reject = arguments[1];
+    const promise = new Promise((res, rej) => {
+        resolve = res;
+        reject = rej;
     });
     return {
         promise: promise,
@@ -17,26 +18,51 @@ const defer = () => {
 };
 
 describe('fetch-retry-or-die', () => {
+    // libraries
+    let fetch, myFetch;
 
-    let fetch;
-    let myFetch;
+    // fake promises
+    let def1, def2, def3, def4;
+    let thenFn, catchFn;
 
-    let def1, def2, def3, thenFn, catchFn;
+    // sinon
+    let stubs, clock, delay, errorMessageStub, warnMessageStub, logMessages = [];
 
-    // before
+    before(() => {
+        errorMessageStub = sinon.stub(logger, 'error', (obj) => {
+            logMessages.push(obj);
+        });
+        warnMessageStub = sinon.stub(logger, 'warn', (obj) => {
+            logMessages.push(obj);
+        });
+    });
+
+    after(() => {
+        errorMessageStub.restore();
+        warnMessageStub.restore();
+    });
+
     beforeEach(() => {
-        let stubs;
+        delay = 101;
+        clock = sinon.useFakeTimers();
         def1 = defer();
         def2 = defer();
         def3 = defer();
+        def4 = defer();
         fetch = sinon.stub();
         fetch.onCall(0).returns(def1.promise);
         fetch.onCall(1).returns(def2.promise);
         fetch.onCall(2).returns(def3.promise);
+        fetch.onCall(3).returns(def4.promise);
         stubs = {
             'isomorphic-fetch': fetch
         };
-        myFetch = proxyquire('./', stubs);
+        myFetch = proxyquire("./index", stubs);
+    });
+
+    afterEach(() => {
+        clock.restore();
+        logMessages = [];
     });
 
     describe('[maxRetries=3]', () => {
@@ -47,21 +73,41 @@ describe('fetch-retry-or-die', () => {
             myFetch('http://whatever.url', {maxRetries:3}).then(thenFn).catch(catchFn);
         });
 
+        // first call works
+        describe('-> #1 works', () => {
+
+            beforeEach(() => {
+                def1.resolve({status: 200});
+            });
+
+            describe('it resolves and', () => {
+
+                it('should execute then callback', () => {
+                    expect(thenFn.called).toBe(true);
+                });
+
+                it('should call fetch twice', () => {
+                    expect(fetch.callCount).toBe(1);
+                });
+            });
+        });
+
         // first call fails
         describe('-> #1 fails', () => {
 
             beforeEach(() => {
-                def1.reject();
+                def1.reject(new Error('Fake rejecting #1'));
             });
 
             // second call works
             describe('-> #2 works', () => {
 
                 beforeEach(() => {
-                    def2.resolve();
+                    clock.tick(delay);
+                    def2.resolve({status: 200});
                 });
 
-                describe('it resolved and', () => {
+                describe('it resolves and', () => {
 
                     it('should execute then callback', () => {
                         expect(thenFn.called).toBe(true);
@@ -77,17 +123,19 @@ describe('fetch-retry-or-die', () => {
             describe('-> #2 fails', () => {
 
                 beforeEach(() => {
-                    def2.reject();
+                    def2.reject(new Error('Fake rejecting #2'));
+                    clock.tick(delay);
                 });
 
                 // third call works
                 describe('-> #3 works', () => {
 
                     beforeEach(() => {
-                        def3.resolve();
+                        def3.resolve({status: 200});
+                        clock.tick(delay);
                     });
 
-                    describe('it resolved and', () => {
+                    describe('it resolves and', () => {
 
                         it('should execute then callback', () => {
                             expect(thenFn.called).toBe(true);
@@ -103,19 +151,49 @@ describe('fetch-retry-or-die', () => {
                 describe('-> #3 fails', () => {
 
                     beforeEach(() => {
-                        def3.reject();
+                        def3.reject(new Error('Fake rejecting #3'));
+                        clock.tick(delay);
                     });
 
-                    describe('it rejects and', function() {
+                    // fourth call works
+                    describe('-> #4 works', () => {
 
-                        it('invokes the catch callback', function() {
-                            expect(catchFn.called).toBe(true);
+                        beforeEach(() => {
+                            def4.resolve({status: 200});
+                            clock.tick(delay);
                         });
 
-                        it('does not call fetch again', function() {
-                            expect(fetch.callCount).toBe(3);
+                        describe('it resolves and', () => {
+
+                            it('should execute then callback', () => {
+                                expect(thenFn.called).toBe(true);
+                            });
+
+                            it('should call fetch 4 times', () => {
+                                expect(fetch.callCount).toBe(4);
+                            });
+                        });
+                    });
+
+                    // fourth call works
+                    describe('-> #4 fails', () => {
+                        let count = 0;
+                        beforeEach(() => {
+                            def4.reject(new Error(++count));
+                            clock.tick(delay);
                         });
 
+                        describe('it rejects and', () => {
+
+                            it('invokes the catch callback', () => {
+                                expect(catchFn.called).toBe(true);
+                            });
+
+                            it('does not call fetch again', () => {
+                                expect(fetch.callCount).toBe(4);
+                            });
+
+                        });
                     });
 
                 });
