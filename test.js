@@ -200,5 +200,4 @@ describe('fetch-retry-or-die', () => {
             });
         });
     });
-
 });
