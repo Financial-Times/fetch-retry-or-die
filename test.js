@@ -175,7 +175,7 @@ describe('fetch-retry-or-die', () => {
                         });
                     });
 
-                    // fourth call works
+                    // fourth call fails
                     describe('-> #4 fails', () => {
                         let count = 0;
                         beforeEach(() => {
