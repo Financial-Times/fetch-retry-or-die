@@ -1,7 +1,7 @@
 'use strict';
-const logger = require('@financial-times/n-logger').default;
 require('es6-promise').polyfill();
-require('isomorphic-fetch');
+const fetch = require('isomorphic-fetch');
+const logger = require('@financial-times/n-logger').default;
 
 module.exports = (url, opt) => {
 
