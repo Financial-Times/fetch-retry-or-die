@@ -1,4 +1,4 @@
-# fetch-retry-or-die
+# fetch-retry-or-die [![Circle CI](https://circleci.com/gh/Financial-Times/fetch-retry-or-die.svg?style=svg)](https://circleci.com/gh/Financial-Times/fetch-retry-or-die)
 A wrapper around [isomorphic-fetch] that allows retries in case of request failure 
 
 ### Install
